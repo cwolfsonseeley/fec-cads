@@ -1,0 +1,27 @@
+.Rproj.user
+.Rhistory
+.RData
+
+# used for output
+matched/**
+reports/**
+
+# data downloaded from fec
+data/fec/2*
+
+# data dictionaries
+data/fec/dd/*.rds
+
+# zips downloaded from CRP (opensecrets.org)
+data/crp/*.zip
+
+# files from the aforementioned zips, but are not used in these scripts
+data/crp/2014/cands14.txt
+data/crp/2014/indivs14.txt
+data/crp/2014/pac_other14.txt
+data/crp/2014/pacs14.txt
+
+data/crp/2016/cands16.txt
+data/crp/2016/indivs16.txt
+data/crp/2016/pac_other16.txt
+data/crp/2016/pacs16.txt
