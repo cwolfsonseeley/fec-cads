@@ -1,3 +1,14 @@
+fec_year <- 2016
+library(lubridate)
+fname <- paste(year(today()), 
+      stringr::str_pad(month(today()), width = 2, pad = "0"),
+      stringr::str_pad(day(today()), width = 2, pad = "0"),
+      ".rds",
+      sep = "")
+dirname <- paste("matched", fec_year, sep = "/")
+if (!dir.exists(dirname)) dir.create(dirname, recursive = TRUE)
+filename <- paste(dirname, fname, sep = "/")
+
 ## use frequency tables to create conditional probabilities
 ## these are for frequency based weight adjustments
 first_wt <- fec_frequency_first %>%
@@ -81,5 +92,6 @@ fec_ind %>%
 ## for verification:
 #http://www.fec.gov/finance/disclosure/adv-search.shtml
 
+saveRDS(all_cads_fec, filename)
 #saveRDS(all_cads_fec, "matched/2014/20160602.rds")
-saveRDS(all_cads_fec, "matched/2016/20160602.rds")
+#saveRDS(all_cads_fec, "matched/2016/20160602.rds")
