@@ -1,5 +1,7 @@
 # pick up data dictionaries for all tables
 library(rvest)
+library(magrittr)
+library(dplyr)
 
 to_coltype <- function(descriptor) {
     ifelse(stringr::str_detect(descriptor, "NUMBER"), "d", "c")
@@ -70,7 +72,7 @@ saveRDS(dd_transaction_type, "./data/fec/dd/dd_transaction_type.rds")
 dd_disbursement_category <- read_html("http://www.fec.gov/finance/disclosure/metadata/CategoryCodes.shtml")
 dd_disbursement_category %<>%
     html_node("table") %>%
-    html_table(header = TRUE, fill = TRUE) %>% 
+    html_table(header = TRUE, fill = TRUE) %>%
     filter(!is.na(`Disbursment Category Code`))
 names(dd_disbursement_category) <- c("category_code", "category_description")
 saveRDS(dd_disbursement_category, "./data/fec/dd/dd_disbursement_category.rds")
