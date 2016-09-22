@@ -1,5 +1,7 @@
 ## use frequency tables to create conditional probabilities
 ## these are for frequency based weight adjustments
+fec_frequency_first <- readRDS("temp/fec_frequency_first")
+cads_frequency_first <- readRDS("temp/cads_frequency_first.rds")
 first_wt <- fec_frequency_first %>%
     inner_join(cads_frequency_first, by = c("first" = "first_name")) %>%
     mutate(n_fec_first = as.numeric(n_fec_first), n_cads_first = as.numeric(n_cads_first)) %>%
@@ -12,7 +14,8 @@ first_wt <- fec_frequency_first %>%
     mutate(weight = log2(m_first / u_first)) %>%
     select(first_name = first, first_weight = weight)
 
-
+fec_frequency_last <- readRDS("temp/fec_frequency_last")
+cads_frequency_last <- readRDS("temp/cads_frequency_last.rds")
 last_wt <- fec_frequency_last %>%
     inner_join(cads_frequency_last, by = c("last" = "last_name")) %>%
     replace_na(list(cads_last = 0, n_cads_last = 0,
@@ -26,17 +29,27 @@ last_wt <- fec_frequency_last %>%
     select(last_name = last, 
            last_weight = wt)
 
+rm(fec_frequency_last, fec_frequency_first, 
+   cads_frequency_first, cads_frequency_last)
+
+candidate_matrix <- readRDS("temp/candidate_matrix.rds")
+occupation <- readRDS("temp/occupation.rds")
+employer <- readRDS("temp/employer.rds")
+
 candidate_matrix %>%
+    mutate(occupation = occupation, employer = employer) %>%
     transmute(fec_id, entity_id, fec_first, cads_first, fec_last, cads_last,
               wt_geo = ifelse(fec_city == cads_city | fec_zip5 == cads_zip5, agree_weight["geo"], disagree_weight["geo"]),
-              wt_occ = ifelse(stringdist(fec_occupation, cads_occupation, "cosine", q = 3) < .5,
-                              agree_weight["occupation"], disagree_weight["occupation"]),
-              wt_emp = ifelse(stringdist(fec_employer, cads_employer, "cosine", q = 3) < .5,
-                              agree_weight["employer"], disagree_weight["employer"])) %>%
+              wt_occ = ifelse(occupation < .5, agree_weight["occupation"], 
+                              disagree_weight["occupation"]),
+              wt_emp = ifelse(employer < .5, agree_weight["employer"], 
+                              disagree_weight["employer"])) %>%
     inner_join(first_wt, by = c("fec_first" = "first_name")) %>%
     inner_join(last_wt, by = c("fec_last" = "last_name")) %>%
     mutate(wt_first = ifelse(fec_first == cads_first, first_weight, -5),
            wt_last  = ifelse(fec_last  == cads_last, last_weight, -5)) -> matchscore
+saveRDS(matchscore, file = "temp/matchscore.rds")
+rm(candidate_matrix, first_wt, last_wt)
 
 matchscore %<>% 
     replace_na(list(wt_geo = 0, wt_occ = 0, wt_emp = 0, 
@@ -57,10 +70,20 @@ matchdict %>%
     filter(score >= 28 | (first > 0 & last > 0 & geo > 0 & score > 25)) %>%
     select(fec_id, entity_id) %>%
     distinct -> idmap
+saveRDS(matchscore, file = "temp/matchscore.rds")
+saveRDS(matchdict, file = "temp/matchdict.rds")
+saveRDS(idmap, file = "temp/idmap.rds")
 
-fec_ind %>% 
+rm(matchscore, matchdict, employer, occupation)
+
+fec_ind <- readRDS("temp/fec_ind.rds")
+
+fec_ind %<>% 
     mutate(fec_mi = middle_initial) %>%
-    inner_join(idmap, by = "fec_id") %>%
+    inner_join(idmap, by = "fec_id")
+
+cads_names <- readRDS("temp/cads_names.rds")
+fec_ind %>%
     inner_join(cads_names, by = "entity_id") %>%
     mutate(mi_score = ifelse(is.na(fec_mi) | is.na(middle_initial.y) |
                                  str_length(str_trim(fec_mi)) == 0 |
@@ -78,8 +101,10 @@ fec_ind %>%
     select(cmte_id:entity_id) %>%
     distinct -> all_cads_fec
 
+rm(cads_names, fec_ind)
+
 ## for verification:
 #http://www.fec.gov/finance/disclosure/adv-search.shtml
 
 #saveRDS(all_cads_fec, "matched/2014/20160602.rds")
-saveRDS(all_cads_fec, "matched/2016/20160602.rds")
+saveRDS(all_cads_fec, "matched/2016/20160818.rds")

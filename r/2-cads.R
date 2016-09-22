@@ -34,3 +34,11 @@ cads_frequency_last <- cads_names %>%
     group_by(last_name) %>%
     summarise(cads_last = n_distinct(entity_id)) %>%
     mutate(n_cads_last = sum(cads_last))
+
+saveRDS(cads_frequency_first, file = "temp/cads_frequency_first.rds")
+saveRDS(cads_frequency_last, file = "temp/cads_frequency_last.rds")
+rm(cads_frequency_first, cads_frequency_last)
+
+saveRDS(cads_address, file = "temp/cads_address.rds")
+saveRDS(cads_employment, file = "temp/cads_employment")
+saveRDS(cads_names, file = "temp/cads_names.rds")

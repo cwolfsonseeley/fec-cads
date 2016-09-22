@@ -8,6 +8,13 @@ fec_year <- 2016
 get_fec(fec_year)
 fec_ind <- individuals(fec_year)
 
+# started doing this when the files got too big, removing cols that don't get
+# used later in the script. 
+fec_ind %<>% 
+    select(-amndt_ind, -rpt_tp, -transaction_pgi, 
+           -other_id, -tran_id, -file_num, -memo_cd, 
+           -memo_text)
+
 # first clean up names a little bit
 # and filter out non-individuals
 fec_ind %<>% 
@@ -58,6 +65,11 @@ unique_individuals %<>%
 fec_ind %<>%
     inner_join(unique_individuals, by = c("first", "last", "shortzip"))
 
+# save fec_ind for later (it's too big to keep around in memory)
+if (!dir.exists("temp")) dir.create("temp")
+saveRDS(fec_ind, file = "temp/fec_ind.rds")
+rm(fec_ind)
+
 # make name frequency tables for frequency based match scores
 fec_frequency_first <- unique_individuals %>%
     group_by(first) %>%
@@ -68,3 +80,8 @@ fec_frequency_last <- unique_individuals %>%
     group_by(last) %>%
     summarise(fec_last = n()) %>%
     mutate(n_fec_last = sum(fec_last))
+
+saveRDS(fec_frequency_first, file = "temp/fec_frequency_first")
+saveRDS(fec_frequency_last, file = "temp/fec_frequency_last")
+saveRDS(unique_individuals, file = "temp/unique_individuals.rds")
+rm(unique_individuals, fec_frequency_first, fec_frequency_last)

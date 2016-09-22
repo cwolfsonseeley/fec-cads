@@ -15,6 +15,8 @@ parties <- readRDS("data/fec/dd/dd_party.rds") %>% tbl_df
 parties %<>% mutate(party_code = ifelse(is.na(party_code), "NA", party_code))
 
 ## pre-check transaction types and make SURE you know what is there
+## http://www.fec.gov/finance/disclosure/metadata/DataDictionaryTransactionTypeCodes.shtml
+## note that several transaction types were added to indiv. file for 2016 cycle
 all_cads_fec %>%
     group_by(transaction_tp) %>%
     summarise(n = n())
