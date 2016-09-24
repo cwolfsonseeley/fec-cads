@@ -1,4 +1,3 @@
-fec_year <- 2016
 library(lubridate)
 fname <- paste(year(today()), 
       stringr::str_pad(month(today()), width = 2, pad = "0"),
