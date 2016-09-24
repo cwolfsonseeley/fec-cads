@@ -1,9 +1,23 @@
 ## shadow builder:
 library(readr)
 readRDS("matched/2014/detailed_fec_2014.rds") %>% 
+    select(cmte_id, image_num, transaction_tp,
+           entity_tp, name, city, state, zip_code,
+           employer, occupation, transaction_dt,
+           transaction_amt, sub_id, entity_id, 
+           cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation,
+           org_tp, connected_org_nm, cand_id, party,
+           cmte_code, category, catorder, industry, sector, cause) %>%
     write_csv(path = "reports/shadow.csv",
               append = FALSE, col_names = TRUE)
 readRDS("matched/2016/detailed_fec_2016.rds") %>%
+    select(cmte_id, image_num, transaction_tp,
+           entity_tp, name, city, state, zip_code,
+           employer, occupation, transaction_dt,
+           transaction_amt, sub_id, entity_id, 
+           cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation,
+           org_tp, connected_org_nm, cand_id, party,
+           cmte_code, category, catorder, industry, sector, cause) %>%
     write_csv("reports/shadow.csv", append = TRUE)
 
 

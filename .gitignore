@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+*.sqlite
 
 # used for output
 matched/**

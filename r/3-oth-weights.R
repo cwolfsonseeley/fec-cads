@@ -4,42 +4,33 @@
 library(tidyr)
 library(stringdist)
 
+# cads 9-digit zips
 cads_address %>%
     mutate(zipcode = str_replace_all(zipcode, "[^0-9]", "")) %>%
     filter(str_length(zipcode) == 9) -> longzips
 
-fec_ind <- readRDS("temp/fec_ind.rds")
-fec_ind %<>% select(fec_id, zip_code)
+# fec 9-digit zips
+fec_longzips <- fec_ind %>% 
+    select(fec_id, zip_code) %>% 
+    filter(length(zip_code) == 9) %>% 
+    distinct %>%
+    collect(n = Inf)
 
-zip_candidates <- fec_ind %>%
-    filter(str_length(zip_code) == 9) %>%
+zip_candidates <- fec_longzips %>%
     inner_join(longzips, by = c("zip_code" = "zipcode")) %>%
     select(fec_id, entity_id) %>%
     distinct
-
-rm(fec_ind)
-unique_individuals <- readRDS("temp/unique_individuals.rds")
 
 name_candidates <- unique_individuals %>%
     inner_join(cads_names, by = c("first" = "first_name",
                                   "last"  = "last_name")) %>%
     select(fec_id, entity_id) %>%
     distinct
-rm(unique_individuals)
 
 all_candidates <- name_candidates %>% 
     dplyr::union(zip_candidates)
 
-# some clean up
-saveRDS(all_candidates, file = "temp/all_candidates.rds")
-saveRDS(zip_candidates, file = "temp/zip_candidates")
-saveRDS(name_candidates, file = "temp/name_candidates")
-saveRDS(longzips, file = "temp/longzips.rds")
-rm(zip_candidates, name_candidates, longzips)
-
-fec_ind <- readRDS("temp/fec_ind.rds")
-
-fec_ind %<>% 
+fec_to_match <- fec_ind %>% 
     select(fec_id, 
            fec_first = first, 
            fec_mi = middle_initial, 
@@ -48,18 +39,15 @@ fec_ind %<>%
            fec_zip = zip_code, 
            fec_zip5 = shortzip,
            fec_employer = employer, 
-           fec_occupation = occupation)
-fec_ind %<>% distinct
+           fec_occupation = occupation) %>%
+    distinct %>%
+    collect(n = Inf)
 
-fec_ind %>%
+fec_to_match %>%
     inner_join(all_candidates, by = "fec_id") %>%
     inner_join(cads_names, by = "entity_id") %>%
     left_join(cads_address, by = "entity_id") %>%
     left_join(cads_employment, by = "entity_id") -> candidate_matrix
-
-# more clean up
-saveRDS(candidate_matrix, file = "temp/candidate_matrix.rds")
-rm(fec_ind, cads_address, cads_employment, cads_names, all_candidates)
 
 candidate_matrix %<>%
     rename(cads_first = first_name,
@@ -70,46 +58,24 @@ candidate_matrix %<>%
            cads_zip5 = zipcode5,
            cads_employer = employer,
            cads_occupation = job_title)
-saveRDS(candidate_matrix, file = "temp/candidate_matrix.rds")
 
 fec_occupation <- candidate_matrix$fec_occupation
 cads_occupation <- candidate_matrix$cads_occupation
 fec_employer <- candidate_matrix$fec_employer
 cads_employer <- candidate_matrix$cads_employer
-rm(candidate_matrix)
 
 occupation <- stringdist(fec_occupation,
                          cads_occupation,
                          method = "cosine", q = 3,
                          nthread = 1)
-saveRDS(occupation, file = "temp/occupation.rds")
-rm(occupation, fec_occupation, cads_occupation)
 
-cutoff <- length(cads_employer) %/% 2
+rm(fec_occupation, cads_occupation)
 
-cads_employer1 <- cads_employer[1:cutoff]
-fec_employer1 <- fec_employer[1:cutoff]
-cads_employer2 <- cads_employer[(cutoff + 1):length(cads_employer)]
-fec_employer2 <- fec_employer[(cutoff + 1):length(fec_employer)]
-rm(cads_employer, fec_employer)
-
-employer1 <- stringdist(fec_employer1,
-                       cads_employer1,
+employer <- stringdist(fec_employer,
+                       cads_employer,
                        method = "cosine", q = 3, 
                        nthread = 1)
-rm(cads_employer1, fec_employer1)
-
-employer2 <- stringdist(fec_employer2,
-                        cads_employer2,
-                        method = "cosine", q = 3, 
-                        nthread = 1)
-
-employer <- c(employer1, employer2)
-rm(employer1, employer2, cads_employer2, fec_employer2)
-saveRDS(employer, file = "temp/employer.rds")
-
-occupation <- readRDS("temp/occupation.rds")
-candidate_matrix <- readRDS("temp/candidate_matrix.rds")
+rm(fec_employer, cads_employer)
 
 candidate_matrix %>%
     transmute(fec_id, entity_id,
@@ -123,7 +89,7 @@ candidate_matrix %>%
                     occupation = FALSE, employer = FALSE)) %>%
     group_by(fec_id, entity_id) %>%
     summarise_each(funs(max)) %>% ungroup -> gamma_matrix
-rm(candidate_matrix, employer, occupation)
+
 #####
 source("r/fs-model-functions.R")
 preds = names(gamma_matrix)[6:8]
@@ -149,6 +115,3 @@ u <- pmin(u, random_agreement(df, preds, "count"))
 u[u<.005] <- .005
 agree_weight <- log2(m/u)
 disagree_weight <- log2((1-m)/(1-u))
-
-saveRDS(gamma_matrix, file = "temp/gamma_matrix.rds")
-rm(list = ls()[!ls() %in% c("agree_weight", "disagree_weight")])

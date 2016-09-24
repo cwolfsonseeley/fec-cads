@@ -35,19 +35,18 @@ cmte_codes <- readr::read_csv("data/crp/codedefs/cmte_codes.csv")
 names(cmte_codes) <- tolower(names(cmte_codes))
 
 all_cads_fec %>%
-    select(cmte_id:sub_id, entity_id) %>%
     mutate(transaction_dt = as.Date(mdy(transaction_dt)),
            transaction_amt = as.numeric(transaction_amt),
            transaction_amt = ifelse(transaction_tp %in% c("20Y", "22Y"),
                                     -transaction_amt, transaction_amt)) %>%
     filter(!transaction_tp %in% c('24I', '24T')) %>%
     left_join(committees, by = "cmte_id") %>% ## inner join should work here
-    select(cmte_id:cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation, 
+    select(fec_id:cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation, 
            org_tp:cand_id) %>%
     left_join(parties, by = c("cmte_pty_affiliation" = "party_code")) %>%
     select(-notes) %>%
     left_join(cmte_extra, by = "cmte_id") %>%
-    select(cmte_id:party, cmte_code) %>%
+    select(fec_id:party, cmte_code) %>%
     left_join(cmte_codes, by = c("cmte_code" = "catcode")) %>% 
     select(-sector) %>%
     rename(category = catname, sector = `sector long`) %>%
