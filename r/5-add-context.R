@@ -4,7 +4,6 @@ library(lubridate)
 library(tidyr)
 #all_cads_fec <- readRDS(...)
 
-fec_year <- 2016
 cmte_extra_filename <- paste("data/crp/", fec_year, "/cmtes", 
                              stringr::str_sub(fec_year, 3, 4), ".txt", sep = "")
 
