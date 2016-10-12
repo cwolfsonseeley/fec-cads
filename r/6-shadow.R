@@ -30,6 +30,14 @@ readRDS("matched/2014/detailed_fec_2014.rds") %>%
     write_csv(path = "R:/Prospect Development/Prospect Analysis/external_datasets/fec2014.csv",
               append = FALSE, col_names = TRUE)
 
+readRDS("matched/2012/detailed_fec_2012.rds") %>%
+    write_csv(path = "R:/Prospect Development/Prospect Analysis/external_datasets/fec2012.csv",
+              append = FALSE, col_names = TRUE)
+
+readRDS("matched/2010/detailed_fec_2010.rds") %>%
+    write_csv(path = "R:/Prospect Development/Prospect Analysis/external_datasets/fec2010.csv",
+              append = FALSE, col_names = TRUE)
+
 ## create an export for the prospect discovery team
 ## per greg, that should:
 # - summarized for each time period by entity id
@@ -38,6 +46,9 @@ readRDS("matched/2014/detailed_fec_2014.rds") %>%
 # - (jic: last rating date)
 fec2014 <- readRDS("matched/2014/detailed_fec_2014.rds")
 fec2016 <- readRDS("matched/2016/detailed_fec_2016.rds")
+
+fec2010 <- readRDS("matched/2010/detailed_fec_2010.rds")
+fec2012 <- readRDS("matched/2012/detailed_fec_2012.rds")
 
 disco_context <- getcdw::get_cdw("
 select 
@@ -66,3 +77,19 @@ fec2016 %>%
               causes = paste(unique(cause), collapse = ", ")) %>%
     left_join(disco_context, by = "entity_id") %>% 
     write.csv("R:/Prospect Development/Prospect Analysis/external_datasets/prospect-discovery-team/fec2016.csv", row.names = FALSE)
+
+fec2010 %>% 
+    mutate(cause = ifelse(is.na(cause), "Unknown", cause)) %>%
+    group_by(entity_id) %>%
+    summarise(total = sum(transaction_amt), 
+              causes = paste(unique(cause), collapse = ", ")) %>%
+    left_join(disco_context, by = "entity_id") %>% 
+    write.csv("R:/Prospect Development/Prospect Analysis/external_datasets/prospect-discovery-team/fec2010.csv", row.names = FALSE)
+
+fec2012 %>% 
+    mutate(cause = ifelse(is.na(cause), "Unknown", cause)) %>%
+    group_by(entity_id) %>%
+    summarise(total = sum(transaction_amt), 
+              causes = paste(unique(cause), collapse = ", ")) %>%
+    left_join(disco_context, by = "entity_id") %>% 
+    write.csv("R:/Prospect Development/Prospect Analysis/external_datasets/prospect-discovery-team/fec2012.csv", row.names = FALSE)
