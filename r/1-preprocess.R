@@ -4,7 +4,7 @@ library(stringr)
 library(magrittr)
 
 # download the data and load the individual contributions file into memory
-fec_year <- 2016
+fec_year <- 2018
 get_fec(fec_year)
 fec_ind <- individuals(fec_year)
 
