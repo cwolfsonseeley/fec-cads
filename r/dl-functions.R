@@ -16,7 +16,11 @@ unzipper <- function(year, filename, location = "./data/fec",
     # and save the name of the text file to "uncompressed"
     zipfile <- paste(filename, stringr::str_sub(year, 3, 4), ".zip", sep = "")
     zipfile <- paste(location, year, zipfile, sep = "/")
-    uncompressed <- unzip(zipfile, list = TRUE)[[1]]
+    ziplist <- unzip(zipfile, list = TRUE)
+    uncompressed <- if (nrow(ziplist) == 1L) {
+        ziplist[[1]] } else {
+            ziplist[[1]][which.max(ziplist$Length)]
+        }
     unzipped <- unzip(zipfile, uncompressed, exdir = tempdir())
     
     # make sure to clean up
