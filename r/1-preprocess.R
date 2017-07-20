@@ -11,18 +11,18 @@ fec_ind <- individuals(fec_year)
 fec_db <- src_sqlite("temp_fec.sqlite", create = TRUE)
 fec_ind <- copy_to(fec_db, fec_ind, name = "fec_ind")
 
-fec_ind %<>%
+fec_ind <- fec_ind %>%
     filter(entity_tp %in% c("CAN", "IND")) %>%
-    mutate(full_last = substr(name, 1, instr(name, ',') - 1L)) %>%
-    mutate(last = substr(name, 1, instr(name, ' ') - 1L)) %>%
-    mutate(first_name = substr(name, instr(name, ',') + 1L)) %>%
-    mutate(first_name = trim(first_name)) %>%
-    mutate(first = substr(first_name, 1, instr(first_name, ' ') - 1L)) %>%
+    mutate(full_last = SUBSTR(name, 1, INSTR(name, ',') - 1L)) %>%
+    mutate(last = SUBSTR(name, 1, INSTR(name, ' ') - 1L)) %>%
+    mutate(first_name = SUBSTR(name, INSTR(name, ',') + 1L)) %>%
+    mutate(first_name = TRIM(first_name)) %>%
+    mutate(first = SUBSTR(first_name, 1, INSTR(first_name, ' ') - 1L)) %>%
     mutate(first = ifelse(first == "", first_name, first)) %>%
-    mutate(middle = substr(first_name,   instr(first_name, ' ') + 1L)) %>%
+    mutate(middle = SUBSTR(first_name, INSTR(first_name, ' ') + 1L)) %>%
     mutate(middle = ifelse(middle == first, NA, middle)) %>%
-    mutate(first = replace(first, '.', '')) %>%
-    mutate(middle = replace(middle, '.', ''))
+    mutate(first = REPLACE(first, '.', '')) %>%
+    mutate(middle = REPLACE(middle, '.', ''))
 
 fec_ind %<>% compute
 
@@ -32,8 +32,8 @@ fec_ind %<>%
 fec_ind %<>% compute
 
 fec_ind %<>%
-    mutate(last = replace(last, ",", "")) %>%
-    mutate(shortzip = substr(zip_code, 1, 5))
+    mutate(last = REPLACE(last, ",", "")) %>%
+    mutate(shortzip = SUBSTR(zip_code, 1, 5))
 
 fec_ind %<>% 
     mutate(last = ifelse(last %in% c("VAN", "DE", "MC", "VON", "ST", "DEL", "LA",
@@ -43,10 +43,10 @@ fec_ind %<>%
     compute
 
 fec_ind %<>%
-    mutate(last = trim(last), 
-           middle = trim(middle), 
-           first = trim(first),
-           full_last = trim(full_last),
+    mutate(last = TRIM(last), 
+           middle = TRIM(middle), 
+           first = TRIM(first),
+           full_last = TRIM(full_last),
            middle_initial = ifelse(is.na(middle) | length(middle) < 1,
                                    NA, substr(middle, 1, 1)))
 fec_ind <- compute(fec_ind)

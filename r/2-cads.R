@@ -8,7 +8,7 @@ cads_employment <- get_cdw(cads_employment_query)
 
 # get names into the same format as fec names from part 1
 cads_names %<>%
-    mutate_each(funs(toupper), -entity_id) %>%
+    mutate_at(.vars = vars(-entity_id), .funs = funs(toupper)) %>%
     mutate(first_name = str_replace_all(first_name, "[^A-Z]", ""),
            last_name  = str_replace_all(last_name, "[^A-Z]", "")) %>%
     mutate(middle_initial = str_trim(str_sub(middle_name, 1, 1)))

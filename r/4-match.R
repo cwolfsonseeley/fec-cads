@@ -45,7 +45,14 @@ candidate_matrix %>%
                               disagree_weight["employer"])) %>%
     inner_join(first_wt, by = c("fec_first" = "first_name")) %>%
     inner_join(last_wt, by = c("fec_last" = "last_name")) %>%
-    mutate(wt_first = ifelse(fec_first == cads_first, first_weight, -5),
+    mutate(wt_first = 
+               ifelse(fec_first == cads_first, first_weight,
+                      ifelse(
+                          stringdist(
+                              fec_first, 
+                              cads_first, 
+                              method = "jw", p = .1) <= .2, 
+                          0, -5)),
            wt_last  = ifelse(fec_last  == cads_last, last_weight, -5)) -> matchscore
 
 rm(candidate_matrix)
@@ -64,6 +71,10 @@ matchscore %>%
     mutate(maxscore = max(score)) %>%
     ungroup %>%
     filter(score == maxscore) -> matchdict
+
+## TODO: review, eg:
+## matchdict %>% filter(occ > 0 & geo > 0 & emp > 0 & (first < 0 | last < 0) & (first > 15 | last > 15))
+## perhaps allow a few more matches in these cases
 
 matchdict %>% 
     filter(score >= 28 | (first > 0 & last > 0 & geo > 0 & score > 25)) %>%
