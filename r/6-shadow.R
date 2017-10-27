@@ -1,5 +1,28 @@
 ## shadow builder:
 library(readr)
+readRDS("matched/2010/detailed_fec_2010.rds") %>%
+    select(cmte_id, image_num, transaction_tp,
+           entity_tp, name, city, state, zip_code,
+           employer, occupation, transaction_dt,
+           transaction_amt, sub_id, entity_id, 
+           cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation,
+           org_tp, connected_org_nm, cand_id, party,
+           cmte_code, category, catorder, industry, sector, cause) %>%
+    mutate(transaction_amt = format(transaction_amt, scientific = FALSE),
+           entity_id = format(entity_id, scientific = FALSE)) %>%
+    write_csv("reports/shadow.csv", append = FALSE, col_names = TRUE)
+readRDS("matched/2012/detailed_fec_2012.rds") %>% 
+    select(cmte_id, image_num, transaction_tp,
+           entity_tp, name, city, state, zip_code,
+           employer, occupation, transaction_dt,
+           transaction_amt, sub_id, entity_id, 
+           cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation,
+           org_tp, connected_org_nm, cand_id, party,
+           cmte_code, category, catorder, industry, sector, cause) %>%
+    mutate(transaction_amt = format(transaction_amt, scientific = FALSE),
+           entity_id = format(entity_id, scientific = FALSE)) %>%
+    write_csv(path = "reports/shadow.csv",
+              append = TRUE)
 readRDS("matched/2014/detailed_fec_2014.rds") %>% 
     select(cmte_id, image_num, transaction_tp,
            entity_tp, name, city, state, zip_code,
@@ -8,8 +31,10 @@ readRDS("matched/2014/detailed_fec_2014.rds") %>%
            cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation,
            org_tp, connected_org_nm, cand_id, party,
            cmte_code, category, catorder, industry, sector, cause) %>%
+    mutate(transaction_amt = format(transaction_amt, scientific = FALSE),
+           entity_id = format(entity_id, scientific = FALSE)) %>%
     write_csv(path = "reports/shadow.csv",
-              append = FALSE, col_names = TRUE)
+              append = TRUE)
 readRDS("matched/2016/detailed_fec_2016.rds") %>%
     select(cmte_id, image_num, transaction_tp,
            entity_tp, name, city, state, zip_code,
@@ -18,8 +43,21 @@ readRDS("matched/2016/detailed_fec_2016.rds") %>%
            cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation,
            org_tp, connected_org_nm, cand_id, party,
            cmte_code, category, catorder, industry, sector, cause) %>%
+    mutate(transaction_amt = format(transaction_amt, scientific = FALSE),
+           entity_id = format(entity_id, scientific = FALSE)) %>%
     write_csv("reports/shadow.csv", append = TRUE)
-
+readRDS("matched/2018/detailed_fec_2018.rds") %>% 
+    select(cmte_id, image_num, transaction_tp,
+           entity_tp, name, city, state, zip_code,
+           employer, occupation, transaction_dt,
+           transaction_amt, sub_id, entity_id, 
+           cmte_nm, cmte_dsgn, cmte_tp, cmte_pty_affiliation,
+           org_tp, connected_org_nm, cand_id, party,
+           cmte_code, category, catorder, industry, sector, cause) %>%
+    mutate(transaction_amt = format(transaction_amt, scientific = FALSE),
+           entity_id = format(entity_id, scientific = FALSE)) %>%
+    write_csv(path = "reports/shadow.csv",
+              append = TRUE)
 
 ## write to shared drive
 readRDS("matched/2018/detailed_fec_2018.rds") %>%
