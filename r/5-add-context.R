@@ -7,7 +7,7 @@ library(tidyr)
 cmte_extra_filename <- paste("data/crp/", fec_year, "/cmtes", 
                              stringr::str_sub(fec_year, 3, 4), ".txt", sep = "")
 
-committees <- committees(fec_year)
+committees <- committees(fec_year) %>% distinct
 parties <- readRDS("data/fec/dd/dd_party.rds") %>% tbl_df
 
 ## woops: notice that party code NA became an <NA> value on import (oof)
