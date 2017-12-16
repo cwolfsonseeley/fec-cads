@@ -20,6 +20,8 @@ all_cads_fec %>%
     group_by(transaction_tp) %>%
     summarise(n = n())
 
+# for reference: get_cdw("select distinct transaction_tp from rdata.fec where fec_cycle < 2018")
+
 ## and load extra table from csr/opensecrets to map committees to ideology/industry
 cmte_extra <- readr::read_delim(file = cmte_extra_filename, 
                                 col_names = c("cycle", "cmte_id", "pac_short", "affiliate",
