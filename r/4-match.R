@@ -77,7 +77,7 @@ matchscore %>%
 ## perhaps allow a few more matches in these cases
 
 matchdict %>% 
-    filter(score >= 28 | (first > 0 & last > 0 & geo > 0 & score > 25)) %>%
+    filter(round(score) >= 28 | (first > 0 & last > 0 & geo > 0 & score > 25)) %>%
     select(fec_id, entity_id) %>%
     distinct -> idmap
 
