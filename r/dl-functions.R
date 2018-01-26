@@ -1,3 +1,13 @@
+bucket_url <- function(year) {
+    basepage_url <- paste("https://www.fec.gov/files/bulk-downloads/index.html?prefix=bulk-downloads/", year, sep = "")
+    basepage <- readLines(basepage_url)
+    bucketurl <- basepage[
+        stringr::str_detect(basepage, "BUCKET_URL")
+    ]
+    if (length(bucketurl) != 1) stop("Can't find bucket URL")
+    stringr::str_match(bucketurl, "BUCKET_URL\\s*=\\s*\\'(.+)\\'")[,2]
+}
+
 get_fec <- function(year, location = "./data/fec",
                     files = c("cm", "cn", "ccl", "oth", "pas2", "indiv"), 
                     ...) {
@@ -5,7 +15,8 @@ get_fec <- function(year, location = "./data/fec",
     if (!dir.exists(destdir)) dir.create(destdir, recursive = TRUE)
     filenames <- paste(files, stringr::str_sub(year, 3, 4), ".zip", sep="")
     destfiles <- paste(destdir, filenames, sep = "/")
-    srcfiles <- paste("ftp://ftp.fec.gov/FEC", year, filenames, sep = "/")
+    #srcfiles <- paste("ftp://ftp.fec.gov/FEC", year, filenames, sep = "/")
+    srcfiles <- paste(bucket_url(year), "bulk-downloads", year, filenames, sep = "/")
     Map(download.file, srcfiles, destfiles)
 }
 
