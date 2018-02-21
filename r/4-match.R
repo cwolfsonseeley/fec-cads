@@ -1,12 +1,17 @@
 library(lubridate)
-fname <- paste(year(today()), 
-      stringr::str_pad(month(today()), width = 2, pad = "0"),
-      stringr::str_pad(day(today()), width = 2, pad = "0"),
-      ".rds",
-      sep = "")
+dt <- paste0(year(today()), 
+             stringr::str_pad(month(today()), width = 2, pad = "0"),
+             stringr::str_pad(day(today()), width = 2, pad = "0"))
+fname <- paste(dt, ".rds", sep = "")
 dirname <- paste("matched", fec_year, sep = "/")
 if (!dir.exists(dirname)) dir.create(dirname, recursive = TRUE)
 filename <- paste(dirname, fname, sep = "/")
+
+if (!dir.exists("matched/matchscores")) dir.create("matched/matchscores")
+saveRDS(
+    list(agree_weight = agree_weight, disagree_weight = disagree_weight),
+    file = paste0("matched/matchscores/weights-", dt, ".rds")
+)
 
 ## use frequency tables to create conditional probabilities
 ## these are for frequency based weight adjustments
