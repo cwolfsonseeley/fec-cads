@@ -40,6 +40,9 @@ last_wt <- fec_frequency_last %>%
     select(last_name = last, 
            last_weight = wt)
 
+saveRDS(list(first_wt = first_wt, last_wt = last_wt),
+        file = paste0("matched/matchscores/nameweights-", dt, ".rds"))
+
 candidate_matrix %>%
     mutate(occupation = occupation, employer = employer) %>%
     transmute(fec_id, entity_id, fec_first, cads_first, fec_last, cads_last,
