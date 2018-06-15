@@ -1,78 +1,43 @@
 source("r/dl-functions.R")
-library(dplyr) # otherwise some painful printing
-library(stringr)
-library(magrittr)
+library(tidyverse)
+library(getcdw)
+library(stringdist)
 
 # download the data and load the individual contributions file into memory
 fec_year <- 2018
 get_fec(fec_year)
 fec_ind <- individuals(fec_year)
 
-fec_db <- src_sqlite("temp_fec.sqlite", create = TRUE)
-fec_ind <- copy_to(fec_db, fec_ind, name = "fec_ind")
+# run once only
+# getcdw::get_cdw("
+# create table rdata.fec_stage (
+#     sub_id varchar2(22),
+#     name varchar2(400),
+#     city varchar2(400),
+#     state varchar2(2),
+#     zip_code varchar2(25),
+#     employer varchar2(400),
+#     occupation varchar2(400),
+# constraint fec_stage primary key (sub_id) )
+# tablespace rdata_ts", dsn = "URELUAT_DEVEL")
+# getcdw::get_cdw("grant all on rdata.fec_stage to tarak", dsn = "URELUAT_DEVEL")
 
-fec_ind <- fec_ind %>%
-    filter(entity_tp %in% c("CAN", "IND")) %>%
-    mutate(full_last = SUBSTR(name, 1, INSTR(name, ',') - 1L)) %>%
-    mutate(last = SUBSTR(name, 1, INSTR(name, ' ') - 1L)) %>%
-    mutate(first_name = SUBSTR(name, INSTR(name, ',') + 1L)) %>%
-    mutate(first_name = TRIM(first_name)) %>%
-    mutate(first = SUBSTR(first_name, 1, INSTR(first_name, ' ') - 1L)) %>%
-    mutate(first = ifelse(first == "", first_name, first)) %>%
-    mutate(middle = SUBSTR(first_name, INSTR(first_name, ' ') + 1L)) %>%
-    mutate(middle = ifelse(middle == first, NA, middle)) %>%
-    mutate(first = REPLACE(first, '.', '')) %>%
-    mutate(middle = REPLACE(middle, '.', ''))
+getcdw::get_cdw("delete from rdata.fec_stage")
 
-fec_ind %<>% compute
+cdw <- getcdw::connect("URELUAT")
+res <- ROracle::dbWriteTable(
+    cdw, "FEC_STAGE", 
+    fec_ind %>% 
+        filter(entity_tp %in% c("CAN", "IND")) %>% 
+        select(sub_id, name, city, state, zip_code, employer, occupation), 
+    schema = 'RDATA',
+    overwrite = FALSE, append = TRUE)
+ROracle::dbCommit(cdw)
 
-fec_ind %<>%
-    mutate(middle = ifelse(middle %in% c("MS", "MR", "MRS", "DR", "DRS"), "", middle))
+getcdw::get_cdw("drop table rdata.fec_stage_processed", dsn = "URELUAT_DEVEL")
+getcdw::get_cdw("sql/preprocess.sql", dsn = "URELUAT_DEVEL")
+ROracle::dbCommit(connect(dsn = "URELUAT_DEVEL"))
 
-fec_ind %<>% compute
-
-fec_ind %<>%
-    mutate(last = REPLACE(last, ",", "")) %>%
-    mutate(shortzip = SUBSTR(zip_code, 1, 5))
-
-fec_ind %<>% 
-    mutate(last = ifelse(last %in% c("VAN", "DE", "MC", "VON", "ST", "DEL", "LA",
-                                     "VANDER", "DI", "O", "LE", "TE", "SAN", "VANDEN",
-                                     "MAC", "DU", "D", "VANDE", "LO", "SANTA"),
-                         full_last, last)) %>%
-    compute
-
-fec_ind %<>%
-    mutate(last = TRIM(last), 
-           middle = TRIM(middle), 
-           first = TRIM(first),
-           full_last = TRIM(full_last),
-           middle_initial = ifelse(is.na(middle) | length(middle) < 1,
-                                   NA, substr(middle, 1, 1)))
-fec_ind <- compute(fec_ind)
-
-# need to be able to identify truly distinct individuals in the dataset, but 
-# there aren't any identifiers. this is an approximation, but there will def. 
-# be distinct people in the same zip code with the same first/last name. 
-unique_individuals <- fec_ind %>%
-    select(first, last, shortzip) %>%
-    distinct %>%
-    compute %>%
-    mutate(fec_id = rowid)
-
-fec_ind %<>%
-    inner_join(unique_individuals, by = c("first", "last", "shortzip")) %>%
-    compute
-
-unique_individuals <- collect(unique_individuals, n = Inf)
-
-# make name frequency tables for frequency based match scores
-fec_frequency_first <- unique_individuals %>%
-    group_by(first) %>%
-    summarise(fec_first = n()) %>%
-    mutate(n_fec_first = sum(fec_first))
-
-fec_frequency_last <- unique_individuals %>%
-    group_by(last) %>%
-    summarise(fec_last = n()) %>%
-    mutate(n_fec_last = sum(fec_last))
+fec_ind <- fec_ind %>% 
+    select(sub_id, cmte_id, image_num, 
+           transaction_tp, transaction_dt, transaction_amt)
