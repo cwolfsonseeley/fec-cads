@@ -155,7 +155,8 @@ where
 
 matchdict %>% 
     filter(round(score) >= 28 | (first > 0 & last > 0 & geo > 0 & score > 25) |
-               (occ > 0 & geo > 0 & emp > 0 & (first > 15 | last > 15))) %>%
+               (occ > 0 & geo > 0 & emp > 0 & (first > 15 | last > 15)) |
+               (fname_sim > .8 & last > 0 & emp > 0 & geo > 0 & occ > 0)) %>%
     left_join(fec_mi, by = "fec_id") %>% 
     left_join(cads_mi, by = "entity_id") %>% 
     mutate(mi_score = ifelse(is.na(middle_init) | is.na(middle_initial) |
@@ -192,6 +193,9 @@ to_cads <- fec %>%
     filter(!transaction_tp %in% c('24I', '24T')) %>%
     select(fec_cycle, entity_id, sub_id, cmte_id, image_num, transaction_tp,
            transaction_dt, transaction_amt)
+
+to_cads <- to_cads %>% 
+    mutate(date_added = today(), date_modified = today())
 
 Sys.setenv(TZ = "DB_TZ")
 Sys.setenv(ORA_SDTZ = "DB_TZ")

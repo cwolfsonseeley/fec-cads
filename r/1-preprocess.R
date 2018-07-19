@@ -22,9 +22,9 @@ fec_ind <- individuals(fec_year)
 # tablespace rdata_ts", dsn = "URELUAT_DEVEL")
 # getcdw::get_cdw("grant all on rdata.fec_stage to tarak", dsn = "URELUAT_DEVEL")
 
-getcdw::get_cdw("delete from rdata.fec_stage")
-
-cdw <- getcdw::connect("URELUAT")
+cdw <- getcdw::connect("URELUAT_DEVEL")
+getcdw::get_cdw("delete from rdata.fec_stage", dsn = "URELUAT_DEVEL")
+ROracle::dbCommit(cdw)
 res <- ROracle::dbWriteTable(
     cdw, "FEC_STAGE", 
     fec_ind %>% 
