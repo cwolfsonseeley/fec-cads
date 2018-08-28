@@ -92,6 +92,20 @@ fec_to_match as (
 from fec_stage_processed fec
 ),
 
+cads_employment as (
+    select distinct
+      entity_id,
+      upper(job_title) as cads_occupation,
+      (select upper(report_name) from cdw.d_entity_mv where entity_id = d_bio_employment_mv.employer_entity_id) as cads_employer
+    from cdw.d_bio_employment_mv
+    where
+      entity_id in (
+        select entity_id from cdw.d_entity_mv 
+        where 
+          person_or_org = 'P' 
+          and record_status_code = 'A')
+),
+
 candidate_matrix as (
   select 
     fec_to_match.*,
@@ -108,17 +122,22 @@ candidate_matrix as (
 )
 
 select
-  fec_id,
-  entity_id,
-  fec_employer as fec_employer,
-  fec_occupation as fec_occupation,
-  max(case when fec_first = cads_first then 1 else 0 end) as first,
-  max(case when fec_mi = cads_mi then 1 else 0 end) as mi,
-  max(case when fec_last = cads_last then 1 else 0 end) as last,
-  max(case when fec_city = cads_city then 1 when fec_zip5 = cads_zip5 then 1 else 0 end) as geo
+  candidate_matrix.fec_id,
+  candidate_matrix.entity_id,
+  candidate_matrix.fec_employer as fec_employer,
+  candidate_matrix.fec_occupation as fec_occupation,
+  cads_employment.cads_employer,
+  cads_employment.cads_occupation,
+  max(case when candidate_matrix.fec_first = candidate_matrix.cads_first then 1 else 0 end) as first,
+  max(case when candidate_matrix.fec_mi = candidate_matrix.cads_mi then 1 else 0 end) as mi,
+  max(case when candidate_matrix.fec_last = candidate_matrix.cads_last then 1 else 0 end) as last,
+  max(case when candidate_matrix.fec_city = candidate_matrix.cads_city then 1 when candidate_matrix.fec_zip5 = candidate_matrix.cads_zip5 then 1 else 0 end) as geo
 from candidate_matrix
+    left join cads_employment on candidate_matrix.entity_id = cads_employment.entity_id
 group by 
-  fec_id,
-  entity_id,
-  fec_employer,
-  fec_occupation
+  candidate_matrix.fec_id,
+  candidate_matrix.entity_id,
+  candidate_matrix.fec_employer,
+  candidate_matrix.fec_occupation,
+  cads_employment.cads_employer,
+  cads_employment.cads_occupation

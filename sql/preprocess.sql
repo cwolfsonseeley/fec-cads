@@ -43,5 +43,7 @@ create table rdata.fec_stage_processed as (
             substr(name, 1, instr(name, ' ') - 1) as last,
             trim(substr(name, instr(name, ',') + 1)) as first_name  
           from rdata.fec_stage
+          /* just focus on transactions that haven't been matched before */
+          where sub_id not in (select sub_id from rdata.fec)
   ))))
 )

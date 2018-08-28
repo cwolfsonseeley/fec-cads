@@ -1,12 +1,6 @@
 candidate_matrix <- getcdw::get_cdw("sql/candidates.sql", dsn = "URELUAT_DEVEL")
-save.image()
-
-library(getcdw)
-source("r/sql_queries.R")
-cads_employment <- get_cdw(cads_employment_query)
 
 candidate_matrix <- candidate_matrix %>% 
-    left_join(cads_employment, by = "entity_id") %>% 
     mutate(occupation = 
                stringdist(fec_occupation,
                           cads_occupation,
@@ -25,6 +19,8 @@ gamma_matrix <- candidate_matrix %>%
                     occupation = FALSE, employer = FALSE)) %>%
     group_by(fec_id, entity_id) %>%
     summarise_all(funs(max)) %>% ungroup
+
+rm(candidate_matrix)
 
 source("r/fs-model-functions.R")
 preds = c("geo", "occupation", "employer")
@@ -123,6 +119,8 @@ matchscore <- gamma_matrix %>%
                           ifelse(fname_sim >= .8, 0, -5)),
         wt_last  = ifelse(last > 0, last_weight, -5))
 
+rm(gamma_matrix, cads_first_names, fec_names, name_weights)
+
 matchdict <- matchscore %>% 
     replace_na(list(wt_geo = 0, wt_occ = 0, wt_emp = 0, 
                     wt_first = 0, wt_last = 0)) %>%
@@ -174,12 +172,14 @@ matchdict %>%
 fec_subids <- get_cdw("select distinct fec_id, sub_id from rdata.fec_stage_processed",
                       dsn = "URELUAT_DEVEL")
 
-rm(cads_employment, cads_first_names, cads_mi, 
-   candidate_matrix, fec_mi, fec_names, gamma_matrix, name_weights,
-   matchscore, matchdict)
+rm(cads_mi, fec_mi, matchscore, matchdict)
 
 fec <- idmap %>% inner_join(fec_subids, by = "fec_id") %>% 
     select(sub_id, entity_id) %>% distinct
+
+rm(fec_subids)
+
+fec_ind <- ind_by_subid(2018, sub_ids = unique(fec$sub_id))
 
 to_cads <- fec %>%
     inner_join(fec_ind, by = "sub_id") %>% 

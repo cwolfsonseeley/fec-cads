@@ -6,7 +6,6 @@ library(stringdist)
 # download the data and load the individual contributions file into memory
 fec_year <- 2018
 get_fec(fec_year)
-fec_ind <- individuals(fec_year)
 
 # run once only
 # getcdw::get_cdw("
@@ -25,19 +24,13 @@ fec_ind <- individuals(fec_year)
 cdw <- getcdw::connect("URELUAT_DEVEL")
 getcdw::get_cdw("delete from rdata.fec_stage", dsn = "URELUAT_DEVEL")
 ROracle::dbCommit(cdw)
-res <- ROracle::dbWriteTable(
-    cdw, "FEC_STAGE", 
-    fec_ind %>% 
-        filter(entity_tp %in% c("CAN", "IND")) %>% 
-        select(sub_id, name, city, state, zip_code, employer, occupation), 
-    schema = 'RDATA',
-    overwrite = FALSE, append = TRUE)
-ROracle::dbCommit(cdw)
+
+chunked_unzipper(fec_year, "indiv")
+# just checking
+# getcdw::get_cdw("select count(*) from rdata.fec_stage", dsn = "URELUAT_DEVEL")
 
 getcdw::get_cdw("drop table rdata.fec_stage_processed", dsn = "URELUAT_DEVEL")
-getcdw::get_cdw("sql/preprocess.sql", dsn = "URELUAT_DEVEL")
 ROracle::dbCommit(connect(dsn = "URELUAT_DEVEL"))
 
-fec_ind <- fec_ind %>% 
-    select(sub_id, cmte_id, image_num, 
-           transaction_tp, transaction_dt, transaction_amt)
+getcdw::get_cdw("sql/preprocess.sql", dsn = "URELUAT_DEVEL")
+ROracle::dbCommit(connect(dsn = "URELUAT_DEVEL"))
